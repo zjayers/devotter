@@ -73,6 +73,7 @@ namespace devotter
         private void BtnBrowseDev_Click(object sender, RoutedEventArgs e)
         {
             var dialog = new FolderBrowserDialog();
+            dialog.Description = "Select Development Base Directory";
             var result = dialog.ShowDialog();
             
             if (result == System.Windows.Forms.DialogResult.OK)
@@ -83,12 +84,37 @@ namespace devotter
         
         private void BtnSaveBasePaths_Click(object sender, RoutedEventArgs e)
         {
+            // Check if paths exist and create them if they don't
+            string[] paths = new string[] 
+            { 
+                TxtDevelopmentBasePath.Text, 
+                TxtTestBasePath.Text, 
+                TxtProductionBasePath.Text 
+            };
+            
+            foreach (string path in paths)
+            {
+                if (!string.IsNullOrEmpty(path) && !Directory.Exists(path))
+                {
+                    try
+                    {
+                        Directory.CreateDirectory(path);
+                    }
+                    catch (Exception ex)
+                    {
+                        LogMessage($"Error creating directory: {ex.Message}");
+                    }
+                }
+            }
+            
             SaveSettingsToFile();
+            LogMessage("Base paths saved and validated.");
         }
         
         private void BtnBrowseTest_Click(object sender, RoutedEventArgs e)
         {
             var dialog = new FolderBrowserDialog();
+            dialog.Description = "Select Test Base Directory";
             var result = dialog.ShowDialog();
             
             if (result == System.Windows.Forms.DialogResult.OK)
@@ -100,6 +126,7 @@ namespace devotter
         private void BtnBrowseProd_Click(object sender, RoutedEventArgs e)
         {
             var dialog = new FolderBrowserDialog();
+            dialog.Description = "Select Production Base Directory";
             var result = dialog.ShowDialog();
             
             if (result == System.Windows.Forms.DialogResult.OK)
@@ -164,12 +191,26 @@ namespace devotter
         
         #endregion
         
-        #region Deployment Handlers
+        #region Deployment Handlers and Removal
         
         private async void BtnDeployToDev_Click(object sender, RoutedEventArgs e)
         {
-            if (sender is Button button && button.Tag is Project project)
+            if (sender is System.Windows.Controls.Button button && button.Tag is Project project)
             {
+                // Check if source path exists
+                if (string.IsNullOrEmpty(project.SourcePath) || !Directory.Exists(project.SourcePath))
+                {
+                    MessageBox.Show(
+                        $"Source path for project {project.Name} does not exist or is not set.\nPlease set a valid source path.",
+                        "Deployment Error",
+                        MessageBoxButton.OK,
+                        MessageBoxImage.Warning);
+                    return;
+                }
+                
+                // Create deployment manager for this project
+                var deploymentManager = new DeploymentManager(project, _settings);
+                
                 // Prompt for version increment
                 var versionWindow = new VersionIncrementWindow(project.CurrentVersion)
                 {
@@ -185,9 +226,6 @@ namespace devotter
                 string newVersion = versionWindow.NewVersion;
                 
                 LogMessage($"Building {project.Name} with new version: {newVersion}");
-                
-                // Create deployment manager for this project
-                var deploymentManager = new DeploymentManager(project, _settings);
                 
                 // Perform build with new version
                 bool buildSuccess = await Task.Run(() => deploymentManager.BuildProject(newVersion).Result);
@@ -223,8 +261,17 @@ namespace devotter
         {
             if (sender is Button button && button.Tag is Project project)
             {
-                if (!project.DeployedToDevelopment)
+                // Create deployment manager for this project
+                var deploymentManager = new DeploymentManager(project, _settings);
+                
+                // Check if deployed to development
+                bool deployedToDev = deploymentManager.CheckIfDeployedToDevelopment();
+                if (!deployedToDev)
                 {
+                    project.DeployedToDevelopment = false;
+                    DgProjects.Items.Refresh();
+                    SaveSettingsToFile();
+                    
                     MessageBox.Show(
                         $"Project {project.Name} must be deployed to development first.",
                         "Deployment Error",
@@ -233,10 +280,10 @@ namespace devotter
                     return;
                 }
                 
-                LogMessage($"Deploying {project.Name} to test environment...");
+                // Make sure status is updated
+                project.DeployedToDevelopment = true;
                 
-                // Create deployment manager for this project
-                var deploymentManager = new DeploymentManager(project, _settings);
+                LogMessage($"Deploying {project.Name} to test environment...");
                 
                 bool deploySuccess = await Task.Run(() => deploymentManager.DeployToTest());
                 
@@ -258,8 +305,33 @@ namespace devotter
         {
             if (sender is Button button && button.Tag is Project project)
             {
-                if (!project.DeployedToTest)
+                // Create deployment manager for this project
+                var deploymentManager = new DeploymentManager(project, _settings);
+                
+                // Check if deployed to development and test
+                bool deployedToDev = deploymentManager.CheckIfDeployedToDevelopment();
+                if (!deployedToDev)
                 {
+                    project.DeployedToDevelopment = false;
+                    project.DeployedToTest = false;
+                    DgProjects.Items.Refresh();
+                    SaveSettingsToFile();
+                    
+                    MessageBox.Show(
+                        $"Project {project.Name} must be deployed to development first.",
+                        "Deployment Error",
+                        MessageBoxButton.OK,
+                        MessageBoxImage.Warning);
+                    return;
+                }
+                
+                bool deployedToTest = deploymentManager.CheckIfDeployedToTest();
+                if (!deployedToTest)
+                {
+                    project.DeployedToTest = false;
+                    DgProjects.Items.Refresh();
+                    SaveSettingsToFile();
+                    
                     MessageBox.Show(
                         $"Project {project.Name} must be deployed to test first.",
                         "Deployment Error",
@@ -267,6 +339,10 @@ namespace devotter
                         MessageBoxImage.Warning);
                     return;
                 }
+                
+                // Make sure status is updated
+                project.DeployedToDevelopment = true;
+                project.DeployedToTest = true;
                 
                 // Confirm deployment to production
                 MessageBoxResult result = MessageBox.Show(
@@ -282,9 +358,6 @@ namespace devotter
                 
                 LogMessage($"Deploying {project.Name} to production environment...");
                 
-                // Create deployment manager for this project
-                var deploymentManager = new DeploymentManager(project, _settings);
-                
                 bool deploySuccess = await Task.Run(() => deploymentManager.DeployToProduction());
                 
                 if (deploySuccess)
@@ -297,6 +370,130 @@ namespace devotter
                 else
                 {
                     LogMessage($"Deployment of {project.Name} to production failed.");
+                }
+            }
+        }
+        
+        private async void BtnRemoveDevDeployment_Click(object sender, RoutedEventArgs e)
+        {
+            if (sender is Button button && button.Tag is Project project)
+            {
+                // Confirm removal from development
+                MessageBoxResult result = MessageBox.Show(
+                    $"Are you sure you want to remove {project.Name} v{project.CurrentVersion} from Development environment?\n\nThis will also remove it from Test and Production environments.",
+                    "Confirm Removal",
+                    MessageBoxButton.YesNo,
+                    MessageBoxImage.Warning);
+                    
+                if (result != MessageBoxResult.Yes)
+                {
+                    return;
+                }
+                
+                // Create deployment manager for this project
+                var deploymentManager = new DeploymentManager(project, _settings);
+                
+                LogMessage($"Removing {project.Name} from all environments...");
+                
+                bool removalSuccess = await Task.Run(() => deploymentManager.RemoveFromAllEnvironments());
+                
+                if (removalSuccess)
+                {
+                    // Update project status
+                    project.DeployedToDevelopment = false;
+                    project.DeployedToTest = false;
+                    project.DeployedToProduction = false;
+                    
+                    DgProjects.Items.Refresh();
+                    SaveSettingsToFile();
+                    LogMessage($"{project.Name} has been removed from all environments.");
+                }
+                else
+                {
+                    LogMessage($"Failed to remove {project.Name} from environments.");
+                }
+            }
+        }
+        
+        private async void BtnRemoveTestDeployment_Click(object sender, RoutedEventArgs e)
+        {
+            if (sender is Button button && button.Tag is Project project)
+            {
+                // Confirm removal from test
+                MessageBoxResult result = MessageBox.Show(
+                    $"Are you sure you want to remove {project.Name} v{project.CurrentVersion} from Test environment?\n\nThis will also remove it from Production environment.",
+                    "Confirm Removal",
+                    MessageBoxButton.YesNo,
+                    MessageBoxImage.Warning);
+                    
+                if (result != MessageBoxResult.Yes)
+                {
+                    return;
+                }
+                
+                // Create deployment manager for this project
+                var deploymentManager = new DeploymentManager(project, _settings);
+                
+                LogMessage($"Removing {project.Name} from Test and Production environments...");
+                
+                // Remove from test
+                bool testRemoved = await Task.Run(() => deploymentManager.RemoveFromTest());
+                
+                // Remove from production
+                bool prodRemoved = await Task.Run(() => deploymentManager.RemoveFromProduction());
+                
+                if (testRemoved || prodRemoved)
+                {
+                    // Update project status
+                    project.DeployedToTest = false;
+                    project.DeployedToProduction = false;
+                    
+                    DgProjects.Items.Refresh();
+                    SaveSettingsToFile();
+                    LogMessage($"{project.Name} has been removed from Test and Production environments.");
+                }
+                else
+                {
+                    LogMessage($"Failed to remove {project.Name} from Test and Production environments.");
+                }
+            }
+        }
+        
+        private async void BtnRemoveProdDeployment_Click(object sender, RoutedEventArgs e)
+        {
+            if (sender is Button button && button.Tag is Project project)
+            {
+                // Confirm removal from production
+                MessageBoxResult result = MessageBox.Show(
+                    $"Are you sure you want to remove {project.Name} v{project.CurrentVersion} from Production environment?",
+                    "Confirm Removal",
+                    MessageBoxButton.YesNo,
+                    MessageBoxImage.Warning);
+                    
+                if (result != MessageBoxResult.Yes)
+                {
+                    return;
+                }
+                
+                // Create deployment manager for this project
+                var deploymentManager = new DeploymentManager(project, _settings);
+                
+                LogMessage($"Removing {project.Name} from Production environment...");
+                
+                bool removalSuccess = await Task.Run(() => deploymentManager.RemoveFromProduction());
+                
+                if (removalSuccess)
+                {
+                    // Update project status
+                    project.DeployedToProduction = false;
+                    
+                    DgProjects.Items.Refresh();
+                    SaveSettingsToFile();
+                    LogMessage($"{project.Name} has been removed from Production environment.");
+                }
+                else
+                {
+                    LogMessage($"Failed to remove {project.Name} from Production environment.");
                 }
             }
         }

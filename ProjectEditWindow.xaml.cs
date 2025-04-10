@@ -34,16 +34,28 @@ namespace devotter
             TxtProjectName.Text = _project.Name;
             TxtVersion.Text = _project.CurrentVersion;
             TxtSourcePath.Text = _project.SourcePath;
-            TxtBuildCommand.Text = _project.BuildCommand;
         }
         
         private void BtnSave_Click(object sender, RoutedEventArgs e)
         {
+            // Validate input
+            if (string.IsNullOrWhiteSpace(TxtProjectName.Text))
+            {
+                MessageBox.Show("Project name cannot be empty.", "Validation Error", MessageBoxButton.OK, MessageBoxImage.Warning);
+                return;
+            }
+            
+            // Validate version format (should be x.y.z)
+            if (!System.Text.RegularExpressions.Regex.IsMatch(TxtVersion.Text, @"^\d+\.\d+\.\d+$"))
+            {
+                MessageBox.Show("Version must be in format: x.y.z (e.g. 1.0.0)", "Validation Error", MessageBoxButton.OK, MessageBoxImage.Warning);
+                return;
+            }
+            
             // Update project with UI values
             _project.Name = TxtProjectName.Text;
             _project.CurrentVersion = TxtVersion.Text;
             _project.SourcePath = TxtSourcePath.Text;
-            _project.BuildCommand = TxtBuildCommand.Text;
             
             // Update config settings
             _project.ConfigSettings.Clear();
@@ -59,6 +71,7 @@ namespace devotter
         private void BtnBrowseSource_Click(object sender, RoutedEventArgs e)
         {
             var dialog = new FolderBrowserDialog();
+            dialog.Description = "Select Source Directory - This is the folder containing the files to deploy";
             var result = dialog.ShowDialog();
             
             if (result == System.Windows.Forms.DialogResult.OK)

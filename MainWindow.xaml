@@ -14,13 +14,11 @@
             <RowDefinition Height="Auto"/>
         </Grid.RowDefinitions>
         
-        <!-- Header without project and version -->
-        <Border Background="{StaticResource PrimaryColor}" Grid.Row="0" Padding="15">
+        <!-- Status bar header instead of large header -->
+        <Border Background="{StaticResource PrimaryColor}" Grid.Row="0" Padding="5">
             <Grid>
-                <StackPanel>
-                    <TextBlock Text="Devotter" FontSize="22" FontWeight="Bold" Foreground="White"/>
-                    <TextBlock Text="Deployment Tool" FontSize="14" Foreground="White" Margin="0,5,0,0"/>
-                </StackPanel>
+                <TextBlock Text="Devotter Deployment Tool" FontSize="12" Foreground="White" 
+                         HorizontalAlignment="Left" VerticalAlignment="Center" Margin="5,0"/>
             </Grid>
         </Border>
         
@@ -99,18 +97,28 @@
                     <DataGrid.Columns>
                         <DataGridTextColumn Header="Project Name" Binding="{Binding Name}" Width="2*"/>
                         <DataGridTextColumn Header="Version" Binding="{Binding CurrentVersion}" Width="1*"/>
-                        <DataGridTextColumn Header="Source Path" Binding="{Binding SourcePath}" Width="3*"/>
-                        <DataGridTextColumn Header="Build Command" Binding="{Binding BuildCommand}" Width="2*"/>
+                        <DataGridTextColumn Header="Source Path" Binding="{Binding SourcePath}" Width="4*"/>
                         
                         <!-- Development Column -->
                         <DataGridTemplateColumn Header="Development" Width="1*">
                             <DataGridTemplateColumn.CellTemplate>
                                 <DataTemplate>
                                     <Grid>
-                                        <Button Content="Deploy" Click="BtnDeployToDev_Click" Tag="{Binding}"
+                                        <!-- Deploy Button -->
+                                        <Button Content="Deploy" Width="80" Height="28" 
+                                                Background="{StaticResource PrimaryColor}" Foreground="White"
+                                                Click="BtnDeployToDev_Click" Tag="{Binding}"
                                                 Visibility="{Binding DeployedToDevelopment, Converter={StaticResource BoolToInverseVisibilityConverter}}"/>
-                                        <TextBlock Text="✓" FontSize="18" FontWeight="Bold" Foreground="Green" HorizontalAlignment="Center"
-                                                 Visibility="{Binding DeployedToDevelopment, Converter={StaticResource BoolToVisibilityConverter}}"/>
+                                        
+                                        <!-- Status and Remove Button (when deployed) -->
+                                        <StackPanel Orientation="Vertical" 
+                                                  Visibility="{Binding DeployedToDevelopment, Converter={StaticResource BoolToVisibilityConverter}}">
+                                            <TextBlock Text="✓" FontSize="18" FontWeight="Bold" Foreground="Green" 
+                                                     HorizontalAlignment="Center"/>
+                                            <Button Content="Remove" Width="60" Height="20" Margin="0,2,0,0"
+                                                    Background="#E53935" Foreground="White" FontSize="10"
+                                                    Click="BtnRemoveDevDeployment_Click" Tag="{Binding}"/>
+                                        </StackPanel>
                                     </Grid>
                                 </DataTemplate>
                             </DataGridTemplateColumn.CellTemplate>
@@ -121,10 +129,21 @@
                             <DataGridTemplateColumn.CellTemplate>
                                 <DataTemplate>
                                     <Grid>
-                                        <Button Content="Deploy" Click="BtnDeployToTest_Click" Tag="{Binding}"
+                                        <!-- Deploy Button -->
+                                        <Button Content="Deploy" Width="80" Height="28" 
+                                                Background="{StaticResource SecondaryColor}" Foreground="White"
+                                                Click="BtnDeployToTest_Click" Tag="{Binding}"
                                                 Visibility="{Binding DeployedToTest, Converter={StaticResource BoolToInverseVisibilityConverter}}"/>
-                                        <TextBlock Text="✓" FontSize="18" FontWeight="Bold" Foreground="Green" HorizontalAlignment="Center"
-                                                 Visibility="{Binding DeployedToTest, Converter={StaticResource BoolToVisibilityConverter}}"/>
+                                        
+                                        <!-- Status and Remove Button (when deployed) -->
+                                        <StackPanel Orientation="Vertical" 
+                                                  Visibility="{Binding DeployedToTest, Converter={StaticResource BoolToVisibilityConverter}}">
+                                            <TextBlock Text="✓" FontSize="18" FontWeight="Bold" Foreground="Green" 
+                                                     HorizontalAlignment="Center"/>
+                                            <Button Content="Remove" Width="60" Height="20" Margin="0,2,0,0"
+                                                    Background="#E53935" Foreground="White" FontSize="10"
+                                                    Click="BtnRemoveTestDeployment_Click" Tag="{Binding}"/>
+                                        </StackPanel>
                                     </Grid>
                                 </DataTemplate>
                             </DataGridTemplateColumn.CellTemplate>
@@ -135,10 +154,21 @@
                             <DataGridTemplateColumn.CellTemplate>
                                 <DataTemplate>
                                     <Grid>
-                                        <Button Content="Deploy" Click="BtnDeployToProd_Click" Tag="{Binding}"
+                                        <!-- Deploy Button -->
+                                        <Button Content="Deploy" Width="80" Height="28" 
+                                                Background="#E53935" Foreground="White"
+                                                Click="BtnDeployToProd_Click" Tag="{Binding}"
                                                 Visibility="{Binding DeployedToProduction, Converter={StaticResource BoolToInverseVisibilityConverter}}"/>
-                                        <TextBlock Text="✓" FontSize="18" FontWeight="Bold" Foreground="Green" HorizontalAlignment="Center"
-                                                 Visibility="{Binding DeployedToProduction, Converter={StaticResource BoolToVisibilityConverter}}"/>
+                                        
+                                        <!-- Status and Remove Button (when deployed) -->
+                                        <StackPanel Orientation="Vertical" 
+                                                  Visibility="{Binding DeployedToProduction, Converter={StaticResource BoolToVisibilityConverter}}">
+                                            <TextBlock Text="✓" FontSize="18" FontWeight="Bold" Foreground="Green" 
+                                                     HorizontalAlignment="Center"/>
+                                            <Button Content="Remove" Width="60" Height="20" Margin="0,2,0,0"
+                                                    Background="#E53935" Foreground="White" FontSize="10"
+                                                    Click="BtnRemoveProdDeployment_Click" Tag="{Binding}"/>
+                                        </StackPanel>
                                     </Grid>
                                 </DataTemplate>
                             </DataGridTemplateColumn.CellTemplate>
@@ -149,8 +179,10 @@
                             <DataGridTemplateColumn.CellTemplate>
                                 <DataTemplate>
                                     <StackPanel Orientation="Horizontal">
-                                        <Button Content="Edit" Click="BtnEditProject_Click" Tag="{Binding}" Margin="2" Width="60"/>
-                                        <Button Content="Remove" Click="BtnRemoveProject_Click" Tag="{Binding}" Margin="2" Width="60"/>
+                                        <Button Content="Edit" Click="BtnEditProject_Click" Tag="{Binding}" 
+                                                Margin="2" Width="60" Height="28"/>
+                                        <Button Content="Remove" Click="BtnRemoveProject_Click" Tag="{Binding}" 
+                                                Margin="2" Width="60" Height="28" Background="#757575" Foreground="White"/>
                                     </StackPanel>
                                 </DataTemplate>
                             </DataGridTemplateColumn.CellTemplate>
@@ -176,6 +208,9 @@
         <StatusBar Grid.Row="2" Background="{StaticResource PrimaryColor}">
             <StatusBarItem>
                 <TextBlock x:Name="TxtStatusBar" Text="Ready" Foreground="White"/>
+            </StatusBarItem>
+            <StatusBarItem HorizontalAlignment="Right">
+                <TextBlock Text="Devotter v1.0.0" Foreground="White" FontSize="10" Margin="0,0,5,0"/>
             </StatusBarItem>
         </StatusBar>
     </Grid>

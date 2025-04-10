@@ -4,6 +4,7 @@ using System.Diagnostics;
 using System.Xml;
 using System.Threading.Tasks;
 using System.Runtime.InteropServices;
+using System.Linq;
 
 namespace devotter.Models
 {
@@ -18,44 +19,138 @@ namespace devotter.Models
             _settings = settings;
         }
         
-        public async Task<bool> BuildProject(string newVersion)
+        public bool CheckIfDeployedToDevelopment()
+        {
+            if (string.IsNullOrEmpty(_settings.DevelopmentBasePath))
+                return false;
+                
+            string folderName = GetVersionFolderName(_project.CurrentVersion);
+            string deploymentDir = Path.Combine(_settings.DevelopmentBasePath, folderName);
+            return Directory.Exists(deploymentDir);
+        }
+        
+        public bool CheckIfDeployedToTest()
+        {
+            if (string.IsNullOrEmpty(_settings.TestBasePath))
+                return false;
+                
+            string folderName = GetVersionFolderName(_project.CurrentVersion);
+            string testDir = Path.Combine(_settings.TestBasePath, folderName);
+            return Directory.Exists(testDir);
+        }
+        
+        public Task<bool> BuildProject(string newVersion)
         {
             try
             {
                 // Update version number
                 _project.CurrentVersion = newVersion;
                 
-                // Execute build command
-                if (!string.IsNullOrEmpty(_project.BuildCommand))
-                {
-                    ProcessStartInfo processInfo = new ProcessStartInfo
-                    {
-                        FileName = OperatingSystem.IsWindows() ? "cmd.exe" : "/bin/bash",
-                        Arguments = OperatingSystem.IsWindows() ? $"/c {_project.BuildCommand}" : $"-c \"{_project.BuildCommand}\"",
-                        WorkingDirectory = _project.SourcePath,
-                        CreateNoWindow = false,
-                        UseShellExecute = false,
-                        RedirectStandardOutput = true,
-                        RedirectStandardError = true
-                    };
-                    
-                    using (Process process = Process.Start(processInfo))
-                    {
-                        if (process != null)
-                        {
-                            await process.WaitForExitAsync();
-                            return process.ExitCode == 0;
-                        }
-                    }
-                }
-                
-                return true;
+                // No actual build process, just return success
+                return Task.FromResult(true);
             }
             catch (Exception ex)
             {
                 Console.WriteLine($"Build error: {ex.Message}");
+                return Task.FromResult(false);
+            }
+        }
+        
+        private string GetVersionFolderName(string version)
+        {
+            // Handle invalid characters in project name
+            string safeName = string.Join("_", _project.Name.Split(Path.GetInvalidFileNameChars()));
+            
+            // Convert version 1.0.1 to v1_0_1 format
+            string formattedVersion = "v" + version.Replace(".", "_");
+            
+            // Return sanitized folder name
+            return $"{safeName}_{formattedVersion}";
+        }
+        
+        public bool RemoveFromDevelopment()
+        {
+            try
+            {
+                if (string.IsNullOrEmpty(_settings.DevelopmentBasePath))
+                    return false;
+                
+                string folderName = GetVersionFolderName(_project.CurrentVersion);
+                string deploymentDir = Path.Combine(_settings.DevelopmentBasePath, folderName);
+                
+                if (Directory.Exists(deploymentDir))
+                {
+                    Directory.Delete(deploymentDir, true);
+                    return true;
+                }
+                
                 return false;
             }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"Development removal error: {ex.Message}");
+                return false;
+            }
+        }
+        
+        public bool RemoveFromTest()
+        {
+            try
+            {
+                if (string.IsNullOrEmpty(_settings.TestBasePath))
+                    return false;
+                
+                string folderName = GetVersionFolderName(_project.CurrentVersion);
+                string testDir = Path.Combine(_settings.TestBasePath, folderName);
+                
+                if (Directory.Exists(testDir))
+                {
+                    Directory.Delete(testDir, true);
+                    return true;
+                }
+                
+                return false;
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"Test removal error: {ex.Message}");
+                return false;
+            }
+        }
+        
+        public bool RemoveFromProduction()
+        {
+            try
+            {
+                if (string.IsNullOrEmpty(_settings.ProductionBasePath))
+                    return false;
+                
+                string folderName = GetVersionFolderName(_project.CurrentVersion);
+                string prodDir = Path.Combine(_settings.ProductionBasePath, folderName);
+                
+                if (Directory.Exists(prodDir))
+                {
+                    Directory.Delete(prodDir, true);
+                    return true;
+                }
+                
+                return false;
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"Production removal error: {ex.Message}");
+                return false;
+            }
+        }
+        
+        public bool RemoveFromAllEnvironments()
+        {
+            bool devRemoved = RemoveFromDevelopment();
+            bool testRemoved = RemoveFromTest();
+            bool prodRemoved = RemoveFromProduction();
+            
+            // Return true if any environment was cleaned up
+            return devRemoved || testRemoved || prodRemoved;
         }
         
         public bool DeployToDevelopment()
@@ -64,13 +159,14 @@ namespace devotter.Models
             {
                 if (string.IsNullOrEmpty(_settings.DevelopmentBasePath))
                     return false;
-                    
-                string targetDir = Path.Combine(_settings.DevelopmentBasePath, _project.Name);
+                
+                string folderName = GetVersionFolderName(_project.CurrentVersion);    
+                string targetDir = Path.Combine(_settings.DevelopmentBasePath, folderName);
                 
                 // Ensure target directory exists
                 Directory.CreateDirectory(targetDir);
                 
-                // Copy files from build output to development
+                // Copy files from source to development
                 CopyDirectory(_project.SourcePath, targetDir);
                 
                 // Update config files
@@ -91,9 +187,10 @@ namespace devotter.Models
             {
                 if (string.IsNullOrEmpty(_settings.TestBasePath) || string.IsNullOrEmpty(_settings.DevelopmentBasePath))
                     return false;
-                    
-                string sourceDir = Path.Combine(_settings.DevelopmentBasePath, _project.Name);
-                string targetDir = Path.Combine(_settings.TestBasePath, _project.Name);
+                
+                string folderName = GetVersionFolderName(_project.CurrentVersion);
+                string sourceDir = Path.Combine(_settings.DevelopmentBasePath, folderName);
+                string targetDir = Path.Combine(_settings.TestBasePath, folderName);
                 
                 // Ensure source exists and target directory exists
                 if (!Directory.Exists(sourceDir))
@@ -122,9 +219,10 @@ namespace devotter.Models
             {
                 if (string.IsNullOrEmpty(_settings.ProductionBasePath) || string.IsNullOrEmpty(_settings.TestBasePath))
                     return false;
-                    
-                string sourceDir = Path.Combine(_settings.TestBasePath, _project.Name);
-                string targetDir = Path.Combine(_settings.ProductionBasePath, _project.Name);
+                
+                string folderName = GetVersionFolderName(_project.CurrentVersion);
+                string sourceDir = Path.Combine(_settings.TestBasePath, folderName);
+                string targetDir = Path.Combine(_settings.ProductionBasePath, folderName);
                 
                 // Ensure source exists and target directory exists
                 if (!Directory.Exists(sourceDir))

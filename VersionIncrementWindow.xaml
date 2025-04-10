@@ -20,15 +20,22 @@
             <TextBlock x:Name="TxtNewVersion" Text="1.0.0" Margin="0,5,0,0"/>
         </StackPanel>
         
-        <StackPanel Grid.Row="2" Orientation="Horizontal" HorizontalAlignment="Center">
-            <Button x:Name="BtnMajor" Content="Major" Width="80" Margin="5" Padding="5" Click="BtnMajor_Click"/>
-            <Button x:Name="BtnMinor" Content="Minor" Width="80" Margin="5" Padding="5" Click="BtnMinor_Click"/>
-            <Button x:Name="BtnPatch" Content="Patch" Width="80" Margin="5" Padding="5" Click="BtnPatch_Click"/>
-        </StackPanel>
+        <Grid Grid.Row="2">
+            <StackPanel Orientation="Horizontal" HorizontalAlignment="Center" VerticalAlignment="Center">
+                <Button x:Name="BtnMajor" Content="Major" Width="80" Height="30" Margin="10" 
+                        Background="{StaticResource PrimaryColor}" Foreground="White" Click="BtnMajor_Click"/>
+                <Button x:Name="BtnMinor" Content="Minor" Width="80" Height="30" Margin="10" 
+                        Background="{StaticResource SecondaryColor}" Foreground="White" Click="BtnMinor_Click"/>
+                <Button x:Name="BtnPatch" Content="Patch" Width="80" Height="30" Margin="10" 
+                        Background="#5C6BC0" Foreground="White" Click="BtnPatch_Click"/>
+            </StackPanel>
+        </Grid>
         
-        <StackPanel Grid.Row="3" Orientation="Horizontal" HorizontalAlignment="Right" Margin="0,10,0,0">
-            <Button x:Name="BtnCancel" Content="Cancel" Width="80" Margin="5,0" Padding="5" IsCancel="True"/>
-            <Button x:Name="BtnOK" Content="OK" Width="80" Margin="5,0" Padding="5" IsDefault="True" Click="BtnOK_Click"/>
+        <StackPanel Grid.Row="3" Orientation="Horizontal" HorizontalAlignment="Right" Margin="0,15,0,0">
+            <Button x:Name="BtnCancel" Content="Cancel" Width="80" Height="30" Margin="5,0" IsCancel="True"/>
+            <Button x:Name="BtnOK" Content="OK" Width="80" Height="30" Margin="5,0" 
+                    Background="{StaticResource PrimaryColor}" Foreground="White"
+                    IsDefault="True" Click="BtnOK_Click"/>
         </StackPanel>
     </Grid>
 </Window>
