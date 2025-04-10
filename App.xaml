@@ -15,6 +15,10 @@
                     <SolidColorBrush x:Key="TextPrimaryColor" Color="#212121"/>
                     <SolidColorBrush x:Key="TextSecondaryColor" Color="#757575"/>
                     
+                    <!-- Converters -->
+                    <local:BoolToVisibilityConverter x:Key="BoolToVisibilityConverter" />
+                    <local:BoolToInverseVisibilityConverter x:Key="BoolToInverseVisibilityConverter" />
+                    
                     <!-- Button styles -->
                     <Style TargetType="Button" x:Key="PrimaryButton">
                         <Setter Property="Background" Value="{StaticResource PrimaryColor}"/>

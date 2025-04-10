@@ -9,10 +9,12 @@ namespace devotter.Models
 {
     public class DeploymentManager
     {
+        private readonly Project _project;
         private readonly AppSettings _settings;
         
-        public DeploymentManager(AppSettings settings)
+        public DeploymentManager(Project project, AppSettings settings)
         {
+            _project = project;
             _settings = settings;
         }
         
@@ -20,18 +22,17 @@ namespace devotter.Models
         {
             try
             {
-                // Update version number logic would be implemented here
-                _settings.CurrentVersion = newVersion;
-                _settings.Save();
+                // Update version number
+                _project.CurrentVersion = newVersion;
                 
                 // Execute build command
-                if (!string.IsNullOrEmpty(_settings.BuildCommand))
+                if (!string.IsNullOrEmpty(_project.BuildCommand))
                 {
                     ProcessStartInfo processInfo = new ProcessStartInfo
                     {
                         FileName = OperatingSystem.IsWindows() ? "cmd.exe" : "/bin/bash",
-                        Arguments = OperatingSystem.IsWindows() ? $"/c {_settings.BuildCommand}" : $"-c \"{_settings.BuildCommand}\"",
-                        WorkingDirectory = _settings.SourcePath,
+                        Arguments = OperatingSystem.IsWindows() ? $"/c {_project.BuildCommand}" : $"-c \"{_project.BuildCommand}\"",
+                        WorkingDirectory = _project.SourcePath,
                         CreateNoWindow = false,
                         UseShellExecute = false,
                         RedirectStandardOutput = true,
@@ -61,16 +62,16 @@ namespace devotter.Models
         {
             try
             {
-                if (string.IsNullOrEmpty(_settings.DevelopmentPath))
+                if (string.IsNullOrEmpty(_settings.DevelopmentBasePath))
                     return false;
                     
-                string targetDir = Path.Combine(_settings.DevelopmentPath, _settings.ProjectName);
+                string targetDir = Path.Combine(_settings.DevelopmentBasePath, _project.Name);
                 
                 // Ensure target directory exists
                 Directory.CreateDirectory(targetDir);
                 
                 // Copy files from build output to development
-                CopyDirectory(_settings.SourcePath, targetDir);
+                CopyDirectory(_project.SourcePath, targetDir);
                 
                 // Update config files
                 UpdateConfigFiles(targetDir, Environment.Development);
@@ -88,11 +89,11 @@ namespace devotter.Models
         {
             try
             {
-                if (string.IsNullOrEmpty(_settings.TestPath) || string.IsNullOrEmpty(_settings.DevelopmentPath))
+                if (string.IsNullOrEmpty(_settings.TestBasePath) || string.IsNullOrEmpty(_settings.DevelopmentBasePath))
                     return false;
                     
-                string sourceDir = Path.Combine(_settings.DevelopmentPath, _settings.ProjectName);
-                string targetDir = Path.Combine(_settings.TestPath, _settings.ProjectName);
+                string sourceDir = Path.Combine(_settings.DevelopmentBasePath, _project.Name);
+                string targetDir = Path.Combine(_settings.TestBasePath, _project.Name);
                 
                 // Ensure source exists and target directory exists
                 if (!Directory.Exists(sourceDir))
@@ -119,11 +120,11 @@ namespace devotter.Models
         {
             try
             {
-                if (string.IsNullOrEmpty(_settings.ProductionPath) || string.IsNullOrEmpty(_settings.TestPath))
+                if (string.IsNullOrEmpty(_settings.ProductionBasePath) || string.IsNullOrEmpty(_settings.TestBasePath))
                     return false;
                     
-                string sourceDir = Path.Combine(_settings.TestPath, _settings.ProjectName);
-                string targetDir = Path.Combine(_settings.ProductionPath, _settings.ProjectName);
+                string sourceDir = Path.Combine(_settings.TestBasePath, _project.Name);
+                string targetDir = Path.Combine(_settings.ProductionBasePath, _project.Name);
                 
                 // Ensure source exists and target directory exists
                 if (!Directory.Exists(sourceDir))
@@ -195,7 +196,7 @@ namespace devotter.Models
                 
                 if (appSettingsNode != null)
                 {
-                    foreach (ConfigSetting setting in _settings.ConfigSettings)
+                    foreach (ConfigSetting setting in _project.ConfigSettings)
                     {
                         // Find the setting by key - use relative XPath to avoid selecting wrong nodes
                         XmlNode? settingNode = appSettingsNode.SelectSingleNode($"./add[@key='{setting.KeyName}']");

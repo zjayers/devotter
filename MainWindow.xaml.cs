@@ -12,8 +12,7 @@ namespace devotter
     public partial class MainWindow : Window
     {
         private AppSettings _settings;
-        private ObservableCollection<ConfigSetting> _configSettings;
-        private DeploymentManager? _deploymentManager;
+        private ObservableCollection<Project> _projects;
         
         public MainWindow()
         {
@@ -21,14 +20,10 @@ namespace devotter
             
             // Load settings
             _settings = AppSettings.Load();
-            _configSettings = new ObservableCollection<ConfigSetting>(_settings.ConfigSettings);
+            _projects = new ObservableCollection<Project>(_settings.Projects);
             
-            // Initialize deployment manager
-            _deploymentManager = new DeploymentManager(_settings);
-            
-            // Bind UI elements to settings
-            DataContext = _settings;
-            LstConfigSettings.ItemsSource = _configSettings;
+            // Bind projects to data grid
+            DgProjects.ItemsSource = _projects;
             
             // Load settings into UI
             LoadSettingsToUI();
@@ -36,29 +31,23 @@ namespace devotter
         
         private void LoadSettingsToUI()
         {
-            TxtProjectName.Text = _settings.ProjectName;
-            TxtCurrentVersion.Text = _settings.CurrentVersion;
-            TxtSourcePath.Text = _settings.SourcePath;
-            TxtBuildCommand.Text = _settings.BuildCommand;
-            TxtDevelopmentPath.Text = _settings.DevelopmentPath;
-            TxtTestPath.Text = _settings.TestPath;
-            TxtProductionPath.Text = _settings.ProductionPath;
+            TxtDevelopmentBasePath.Text = _settings.DevelopmentBasePath;
+            TxtTestBasePath.Text = _settings.TestBasePath;
+            TxtProductionBasePath.Text = _settings.ProductionBasePath;
         }
         
-        private void SaveSettingsFromUI()
+        private void SaveSettingsToFile()
         {
-            _settings.ProjectName = TxtProjectName.Text;
-            _settings.SourcePath = TxtSourcePath.Text;
-            _settings.BuildCommand = TxtBuildCommand.Text;
-            _settings.DevelopmentPath = TxtDevelopmentPath.Text;
-            _settings.TestPath = TxtTestPath.Text;
-            _settings.ProductionPath = TxtProductionPath.Text;
+            // Update settings with UI values
+            _settings.DevelopmentBasePath = TxtDevelopmentBasePath.Text;
+            _settings.TestBasePath = TxtTestBasePath.Text;
+            _settings.ProductionBasePath = TxtProductionBasePath.Text;
             
-            // Update config settings list
-            _settings.ConfigSettings.Clear();
-            foreach (ConfigSetting setting in _configSettings)
+            // Update projects list
+            _settings.Projects.Clear();
+            foreach (Project project in _projects)
             {
-                _settings.ConfigSettings.Add(setting);
+                _settings.Projects.Add(project);
             }
             
             // Save settings to file
@@ -81,169 +70,234 @@ namespace devotter
         
         #region Browse Buttons Click Handlers
         
-        private void BtnBrowseSource_Click(object sender, RoutedEventArgs e)
+        private void BtnBrowseDev_Click(object sender, RoutedEventArgs e)
         {
-            var dialog = new System.Windows.Forms.FolderBrowserDialog();
+            var dialog = new FolderBrowserDialog();
             var result = dialog.ShowDialog();
             
             if (result == System.Windows.Forms.DialogResult.OK)
             {
-                TxtSourcePath.Text = dialog.SelectedPath;
+                TxtDevelopmentBasePath.Text = dialog.SelectedPath;
             }
         }
         
-        private void BtnBrowseDev_Click(object sender, RoutedEventArgs e)
+        private void BtnSaveBasePaths_Click(object sender, RoutedEventArgs e)
         {
-            var dialog = new System.Windows.Forms.FolderBrowserDialog();
-            var result = dialog.ShowDialog();
-            
-            if (result == System.Windows.Forms.DialogResult.OK)
-            {
-                TxtDevelopmentPath.Text = dialog.SelectedPath;
-            }
+            SaveSettingsToFile();
         }
         
         private void BtnBrowseTest_Click(object sender, RoutedEventArgs e)
         {
-            var dialog = new System.Windows.Forms.FolderBrowserDialog();
+            var dialog = new FolderBrowserDialog();
             var result = dialog.ShowDialog();
             
             if (result == System.Windows.Forms.DialogResult.OK)
             {
-                TxtTestPath.Text = dialog.SelectedPath;
+                TxtTestBasePath.Text = dialog.SelectedPath;
             }
         }
         
         private void BtnBrowseProd_Click(object sender, RoutedEventArgs e)
         {
-            var dialog = new System.Windows.Forms.FolderBrowserDialog();
+            var dialog = new FolderBrowserDialog();
             var result = dialog.ShowDialog();
             
             if (result == System.Windows.Forms.DialogResult.OK)
             {
-                TxtProductionPath.Text = dialog.SelectedPath;
+                TxtProductionBasePath.Text = dialog.SelectedPath;
             }
         }
         
         #endregion
         
-        #region Config Settings Handlers
+        #region Project Management Handlers
         
-        private void BtnAddConfig_Click(object sender, RoutedEventArgs e)
+        private void BtnAddProject_Click(object sender, RoutedEventArgs e)
         {
-            _configSettings.Add(new ConfigSetting
+            var projectWindow = new ProjectEditWindow()
             {
-                KeyName = "NewSetting",
-                DevelopmentValue = "DevValue",
-                TestValue = "TestValue",
-                ProductionValue = "ProdValue"
-            });
+                Owner = this
+            };
+            
+            if (projectWindow.ShowDialog() == true)
+            {
+                _projects.Add(projectWindow.Project);
+                SaveSettingsToFile();
+            }
         }
         
-        private void BtnRemoveConfig_Click(object sender, RoutedEventArgs e)
+        private void BtnEditProject_Click(object sender, RoutedEventArgs e)
         {
-            if (sender is Button button && button.Tag is ConfigSetting setting)
+            if (sender is Button button && button.Tag is Project project)
             {
-                _configSettings.Remove(setting);
+                var projectWindow = new ProjectEditWindow(project)
+                {
+                    Owner = this
+                };
+                
+                if (projectWindow.ShowDialog() == true)
+                {
+                    // Project is updated by reference, just save settings
+                    SaveSettingsToFile();
+                    DgProjects.Items.Refresh();
+                }
+            }
+        }
+        
+        private void BtnRemoveProject_Click(object sender, RoutedEventArgs e)
+        {
+            if (sender is Button button && button.Tag is Project project)
+            {
+                MessageBoxResult result = MessageBox.Show(
+                    $"Are you sure you want to remove the project '{project.Name}'?",
+                    "Confirm Project Removal",
+                    MessageBoxButton.YesNo,
+                    MessageBoxImage.Question);
+                    
+                if (result == MessageBoxResult.Yes)
+                {
+                    _projects.Remove(project);
+                    SaveSettingsToFile();
+                }
             }
         }
         
         #endregion
-        
-        private void BtnSaveSettings_Click(object sender, RoutedEventArgs e)
-        {
-            SaveSettingsFromUI();
-        }
         
         #region Deployment Handlers
         
         private async void BtnDeployToDev_Click(object sender, RoutedEventArgs e)
         {
-            // Prompt for version increment
-            var versionWindow = new VersionIncrementWindow(_settings.CurrentVersion)
+            if (sender is Button button && button.Tag is Project project)
             {
-                Owner = this
-            };
-            if (versionWindow.ShowDialog() != true)
-            {
-                return;
-            }
-            
-            // Get the new version
-            string newVersion = versionWindow.NewVersion;
-            
-            LogMessage($"Building project with new version: {newVersion}");
-            
-            // Perform build with new version
-            bool buildSuccess = await Task.Run(() => _deploymentManager?.BuildProject(newVersion).Result ?? false);
-            
-            if (!buildSuccess)
-            {
-                LogMessage("Build failed. Deployment aborted.");
-                return;
-            }
-            
-            LogMessage("Build completed successfully.");
-            
-            // Update version display
-            TxtCurrentVersion.Text = newVersion;
-            
-            // Deploy to development
-            LogMessage("Deploying to development environment...");
-            
-            bool deploySuccess = await Task.Run(() => _deploymentManager?.DeployToDevelopment() ?? false);
-            
-            if (deploySuccess)
-            {
-                LogMessage("Deployment to development completed successfully.");
-            }
-            else
-            {
-                LogMessage("Deployment to development failed.");
+                // Prompt for version increment
+                var versionWindow = new VersionIncrementWindow(project.CurrentVersion)
+                {
+                    Owner = this
+                };
+                
+                if (versionWindow.ShowDialog() != true)
+                {
+                    return;
+                }
+                
+                // Get the new version
+                string newVersion = versionWindow.NewVersion;
+                
+                LogMessage($"Building {project.Name} with new version: {newVersion}");
+                
+                // Create deployment manager for this project
+                var deploymentManager = new DeploymentManager(project, _settings);
+                
+                // Perform build with new version
+                bool buildSuccess = await Task.Run(() => deploymentManager.BuildProject(newVersion).Result);
+                
+                if (!buildSuccess)
+                {
+                    LogMessage($"Build failed for {project.Name}. Deployment aborted.");
+                    return;
+                }
+                
+                LogMessage($"Build completed successfully for {project.Name}.");
+                
+                // Deploy to development
+                LogMessage($"Deploying {project.Name} to development environment...");
+                
+                bool deploySuccess = await Task.Run(() => deploymentManager.DeployToDevelopment());
+                
+                if (deploySuccess)
+                {
+                    project.DeployedToDevelopment = true;
+                    DgProjects.Items.Refresh();
+                    SaveSettingsToFile();
+                    LogMessage($"Deployment of {project.Name} to development completed successfully.");
+                }
+                else
+                {
+                    LogMessage($"Deployment of {project.Name} to development failed.");
+                }
             }
         }
         
         private async void BtnDeployToTest_Click(object sender, RoutedEventArgs e)
         {
-            LogMessage("Deploying to test environment...");
-            
-            bool deploySuccess = await Task.Run(() => _deploymentManager?.DeployToTest() ?? false);
-            
-            if (deploySuccess)
+            if (sender is Button button && button.Tag is Project project)
             {
-                LogMessage("Deployment to test completed successfully.");
-            }
-            else
-            {
-                LogMessage("Deployment to test failed.");
+                if (!project.DeployedToDevelopment)
+                {
+                    MessageBox.Show(
+                        $"Project {project.Name} must be deployed to development first.",
+                        "Deployment Error",
+                        MessageBoxButton.OK,
+                        MessageBoxImage.Warning);
+                    return;
+                }
+                
+                LogMessage($"Deploying {project.Name} to test environment...");
+                
+                // Create deployment manager for this project
+                var deploymentManager = new DeploymentManager(project, _settings);
+                
+                bool deploySuccess = await Task.Run(() => deploymentManager.DeployToTest());
+                
+                if (deploySuccess)
+                {
+                    project.DeployedToTest = true;
+                    DgProjects.Items.Refresh();
+                    SaveSettingsToFile();
+                    LogMessage($"Deployment of {project.Name} to test completed successfully.");
+                }
+                else
+                {
+                    LogMessage($"Deployment of {project.Name} to test failed.");
+                }
             }
         }
         
         private async void BtnDeployToProd_Click(object sender, RoutedEventArgs e)
         {
-            // Confirm deployment to production
-            MessageBoxResult result = MessageBox.Show(
-                "Are you sure you want to deploy to production?",
-                "Confirm Production Deployment",
-                MessageBoxButton.YesNo,
-                MessageBoxImage.Question);
+            if (sender is Button button && button.Tag is Project project)
+            {
+                if (!project.DeployedToTest)
+                {
+                    MessageBox.Show(
+                        $"Project {project.Name} must be deployed to test first.",
+                        "Deployment Error",
+                        MessageBoxButton.OK,
+                        MessageBoxImage.Warning);
+                    return;
+                }
                 
-            if (result != MessageBoxResult.Yes)
-            {
-                return;
-            }
-            
-            LogMessage("Deploying to production environment...");
-            
-            bool deploySuccess = await Task.Run(() => _deploymentManager?.DeployToProduction() ?? false);
-            
-            if (deploySuccess)
-            {
-                LogMessage("Deployment to production completed successfully.");
-            }
-            else
-            {
-                LogMessage("Deployment to production failed.");
+                // Confirm deployment to production
+                MessageBoxResult result = MessageBox.Show(
+                    $"Are you sure you want to deploy {project.Name} to production?",
+                    "Confirm Production Deployment",
+                    MessageBoxButton.YesNo,
+                    MessageBoxImage.Question);
+                    
+                if (result != MessageBoxResult.Yes)
+                {
+                    return;
+                }
+                
+                LogMessage($"Deploying {project.Name} to production environment...");
+                
+                // Create deployment manager for this project
+                var deploymentManager = new DeploymentManager(project, _settings);
+                
+                bool deploySuccess = await Task.Run(() => deploymentManager.DeployToProduction());
+                
+                if (deploySuccess)
+                {
+                    project.DeployedToProduction = true;
+                    DgProjects.Items.Refresh();
+                    SaveSettingsToFile();
+                    LogMessage($"Deployment of {project.Name} to production completed successfully.");
+                }
+                else
+                {
+                    LogMessage($"Deployment of {project.Name} to production failed.");
+                }
             }
         }
         

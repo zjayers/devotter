@@ -7,16 +7,11 @@ namespace devotter.Models
 {
     public class AppSettings
     {
-        public string ProjectName { get; set; } = "MyApp";
-        public string CurrentVersion { get; set; } = "1.0.0";
-        public string SourcePath { get; set; } = "";
-        public string BuildCommand { get; set; } = "";
+        public List<Project> Projects { get; set; } = new List<Project>();
         
-        public string DevelopmentPath { get; set; } = "";
-        public string TestPath { get; set; } = "";
-        public string ProductionPath { get; set; } = "";
-        
-        public List<ConfigSetting> ConfigSettings { get; set; } = new List<ConfigSetting>();
+        public string DevelopmentBasePath { get; set; } = "";
+        public string TestBasePath { get; set; } = "";
+        public string ProductionBasePath { get; set; } = "";
         
         private static string SettingsPath => Path.Combine(
             Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData),
