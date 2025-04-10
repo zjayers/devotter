@@ -1,0 +1,272 @@
+<Window x:Class="devotter.MainWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+        xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+        xmlns:local="clr-namespace:devotter"
+        mc:Ignorable="d"
+        Title="Devotter - Deployment Tool" Height="700" Width="900"
+        Background="{StaticResource BackgroundColor}">
+    <Grid>
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="*"/>
+            <RowDefinition Height="Auto"/>
+        </Grid.RowDefinitions>
+        
+        <!-- Header with version info -->
+        <Border Background="{StaticResource PrimaryColor}" Grid.Row="0" Padding="15">
+            <Grid>
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="*"/>
+                    <ColumnDefinition Width="Auto"/>
+                </Grid.ColumnDefinitions>
+                
+                <StackPanel Grid.Column="0">
+                    <TextBlock Text="Devotter" FontSize="22" FontWeight="Bold" Foreground="White"/>
+                    <TextBlock Text="Deployment Tool" FontSize="14" Foreground="White" Margin="0,5,0,0"/>
+                </StackPanel>
+                
+                <StackPanel Grid.Column="1" Orientation="Horizontal" VerticalAlignment="Center">
+                    <TextBlock Text="Project:" Foreground="White" Margin="0,0,5,0"/>
+                    <TextBox x:Name="TxtProjectName" Text="MyApp" Width="150" Margin="0,0,15,0"/>
+                    <TextBlock Text="Version:" Foreground="White" Margin="0,0,5,0"/>
+                    <TextBlock x:Name="TxtCurrentVersion" Text="1.0.0" Foreground="White" FontWeight="Bold"/>
+                </StackPanel>
+            </Grid>
+        </Border>
+        
+        <!-- Main content -->
+        <TabControl Grid.Row="1" Margin="10">
+            <!-- Settings Tab -->
+            <TabItem Header="Settings">
+                <ScrollViewer VerticalScrollBarVisibility="Auto">
+                    <Grid Margin="10">
+                        <Grid.RowDefinitions>
+                            <RowDefinition Height="Auto"/>
+                            <RowDefinition Height="Auto"/>
+                            <RowDefinition Height="Auto"/>
+                            <RowDefinition Height="*"/>
+                        </Grid.RowDefinitions>
+                    
+                        <!-- Project Settings Section -->
+                        <GroupBox Header="Project Settings" Grid.Row="0" Margin="0,0,0,15">
+                            <Grid Margin="10">
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="150"/>
+                                    <ColumnDefinition Width="*"/>
+                                    <ColumnDefinition Width="Auto"/>
+                                </Grid.ColumnDefinitions>
+                                <Grid.RowDefinitions>
+                                    <RowDefinition Height="Auto"/>
+                                    <RowDefinition Height="Auto"/>
+                                </Grid.RowDefinitions>
+                            
+                                <!-- Source Path -->
+                                <TextBlock Text="Source Path:" Grid.Row="0" Grid.Column="0" VerticalAlignment="Center"/>
+                                <TextBox x:Name="TxtSourcePath" Grid.Row="0" Grid.Column="1" Margin="5" Padding="5"/>
+                                <Button x:Name="BtnBrowseSource" Content="Browse" Grid.Row="0" Grid.Column="2" 
+                                        Margin="5" Padding="10,5" Click="BtnBrowseSource_Click"/>
+                            
+                                <!-- Build Command -->
+                                <TextBlock Text="Build Command:" Grid.Row="1" Grid.Column="0" VerticalAlignment="Center"/>
+                                <TextBox x:Name="TxtBuildCommand" Grid.Row="1" Grid.Column="1" Margin="5" Padding="5"/>
+                                <TextBlock Text="" Grid.Row="1" Grid.Column="2" Width="70"/>
+                            </Grid>
+                        </GroupBox>
+                    
+                        <!-- Deployment Paths Section -->
+                        <GroupBox Header="Deployment Paths" Grid.Row="1" Margin="0,0,0,15">
+                            <Grid Margin="10">
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="150"/>
+                                    <ColumnDefinition Width="*"/>
+                                    <ColumnDefinition Width="Auto"/>
+                                </Grid.ColumnDefinitions>
+                                <Grid.RowDefinitions>
+                                    <RowDefinition Height="Auto"/>
+                                    <RowDefinition Height="Auto"/>
+                                    <RowDefinition Height="Auto"/>
+                                </Grid.RowDefinitions>
+                            
+                                <!-- Development Path -->
+                                <TextBlock Text="Development:" Grid.Row="0" Grid.Column="0" VerticalAlignment="Center"/>
+                                <TextBox x:Name="TxtDevelopmentPath" Grid.Row="0" Grid.Column="1" Margin="5" Padding="5"/>
+                                <Button x:Name="BtnBrowseDev" Content="Browse" Grid.Row="0" Grid.Column="2" 
+                                        Margin="5" Padding="10,5" Click="BtnBrowseDev_Click"/>
+                            
+                                <!-- Test Path -->
+                                <TextBlock Text="Test:" Grid.Row="1" Grid.Column="0" VerticalAlignment="Center"/>
+                                <TextBox x:Name="TxtTestPath" Grid.Row="1" Grid.Column="1" Margin="5" Padding="5"/>
+                                <Button x:Name="BtnBrowseTest" Content="Browse" Grid.Row="1" Grid.Column="2" 
+                                        Margin="5" Padding="10,5" Click="BtnBrowseTest_Click"/>
+                            
+                                <!-- Production Path -->
+                                <TextBlock Text="Production:" Grid.Row="2" Grid.Column="0" VerticalAlignment="Center"/>
+                                <TextBox x:Name="TxtProductionPath" Grid.Row="2" Grid.Column="1" Margin="5" Padding="5"/>
+                                <Button x:Name="BtnBrowseProd" Content="Browse" Grid.Row="2" Grid.Column="2" 
+                                        Margin="5" Padding="10,5" Click="BtnBrowseProd_Click"/>
+                            </Grid>
+                        </GroupBox>
+                    
+                        <!-- Configuration Settings Section -->
+                        <GroupBox Header="Configuration Settings" Grid.Row="2" Margin="0,0,0,15">
+                            <Grid Margin="10">
+                                <Grid.RowDefinitions>
+                                    <RowDefinition Height="Auto"/>
+                                    <RowDefinition Height="*"/>
+                                    <RowDefinition Height="Auto"/>
+                                </Grid.RowDefinitions>
+                            
+                                <!-- Header -->
+                                <Grid Grid.Row="0">
+                                    <Grid.ColumnDefinitions>
+                                        <ColumnDefinition Width="3*"/>
+                                        <ColumnDefinition Width="3*"/>
+                                        <ColumnDefinition Width="3*"/>
+                                        <ColumnDefinition Width="3*"/>
+                                        <ColumnDefinition Width="Auto"/>
+                                    </Grid.ColumnDefinitions>
+                                
+                                    <TextBlock Text="Key Name" FontWeight="Bold" Grid.Column="0" Margin="5"/>
+                                    <TextBlock Text="Development Value" FontWeight="Bold" Grid.Column="1" Margin="5"/>
+                                    <TextBlock Text="Test Value" FontWeight="Bold" Grid.Column="2" Margin="5"/>
+                                    <TextBlock Text="Production Value" FontWeight="Bold" Grid.Column="3" Margin="5"/>
+                                    <TextBlock Grid.Column="4" Width="80"/>
+                                </Grid>
+                            
+                                <!-- Config Items -->
+                                <ListView x:Name="LstConfigSettings" Grid.Row="1" Margin="0,5" BorderThickness="1" 
+                                          BorderBrush="#CCCCCC" Height="150">
+                                    <ListView.ItemTemplate>
+                                        <DataTemplate>
+                                            <Grid>
+                                                <Grid.ColumnDefinitions>
+                                                    <ColumnDefinition Width="3*"/>
+                                                    <ColumnDefinition Width="3*"/>
+                                                    <ColumnDefinition Width="3*"/>
+                                                    <ColumnDefinition Width="3*"/>
+                                                    <ColumnDefinition Width="Auto"/>
+                                                </Grid.ColumnDefinitions>
+                                            
+                                                <TextBox Text="{Binding KeyName}" Grid.Column="0" Margin="2" Width="150"/>
+                                                <TextBox Text="{Binding DevelopmentValue}" Grid.Column="1" Margin="2" Width="150"/>
+                                                <TextBox Text="{Binding TestValue}" Grid.Column="2" Margin="2" Width="150"/>
+                                                <TextBox Text="{Binding ProductionValue}" Grid.Column="3" Margin="2" Width="150"/>
+                                                <Button Content="Remove" Grid.Column="4" Margin="2" Width="70" 
+                                                        Tag="{Binding}" Click="BtnRemoveConfig_Click"/>
+                                            </Grid>
+                                        </DataTemplate>
+                                    </ListView.ItemTemplate>
+                                </ListView>
+                            
+                                <!-- Add Config Button -->
+                                <Button x:Name="BtnAddConfig" Content="Add Config Setting" Grid.Row="2" Margin="0,5,0,0" 
+                                        HorizontalAlignment="Left" Padding="10,5" Click="BtnAddConfig_Click"/>
+                            </Grid>
+                        </GroupBox>
+                    
+                        <Button x:Name="BtnSaveSettings" Content="Save Settings" 
+                                Grid.Row="3" Margin="0,10,0,0" HorizontalAlignment="Right"
+                                Style="{StaticResource PrimaryButton}" Click="BtnSaveSettings_Click"/>
+                    </Grid>
+                </ScrollViewer>
+            </TabItem>
+            
+            <!-- Deployment Tab -->
+            <TabItem Header="Deployment">
+                <Grid Margin="20">
+                    <Grid.RowDefinitions>
+                        <RowDefinition Height="*"/>
+                        <RowDefinition Height="Auto"/>
+                    </Grid.RowDefinitions>
+                    
+                    <!-- Deployment Cards -->
+                    <Grid Grid.Row="0">
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="*"/>
+                            <ColumnDefinition Width="*"/>
+                            <ColumnDefinition Width="*"/>
+                        </Grid.ColumnDefinitions>
+                        
+                        <!-- Development Card -->
+                        <Border Grid.Column="0" Margin="10" Background="White" BorderBrush="#DDDDDD" 
+                                BorderThickness="1" CornerRadius="5">
+                            <Grid Margin="15">
+                                <Grid.RowDefinitions>
+                                    <RowDefinition Height="Auto"/>
+                                    <RowDefinition Height="*"/>
+                                    <RowDefinition Height="Auto"/>
+                                </Grid.RowDefinitions>
+                                
+                                <TextBlock Text="Development" FontSize="18" FontWeight="Bold" Grid.Row="0"/>
+                                <TextBlock Text="Deploy to development environment" Grid.Row="1" Margin="0,10,0,0" 
+                                           TextWrapping="Wrap" Foreground="{StaticResource TextSecondaryColor}"/>
+                                <Button x:Name="BtnDeployToDev" Content="Deploy to Development" 
+                                        Grid.Row="2" Margin="0,15,0,0" Style="{StaticResource PrimaryButton}" 
+                                        Click="BtnDeployToDev_Click"/>
+                            </Grid>
+                        </Border>
+                        
+                        <!-- Test Card -->
+                        <Border Grid.Column="1" Margin="10" Background="White" BorderBrush="#DDDDDD" 
+                                BorderThickness="1" CornerRadius="5">
+                            <Grid Margin="15">
+                                <Grid.RowDefinitions>
+                                    <RowDefinition Height="Auto"/>
+                                    <RowDefinition Height="*"/>
+                                    <RowDefinition Height="Auto"/>
+                                </Grid.RowDefinitions>
+                                
+                                <TextBlock Text="Test" FontSize="18" FontWeight="Bold" Grid.Row="0"/>
+                                <TextBlock Text="Deploy from Development to Test environment" Grid.Row="1" Margin="0,10,0,0" 
+                                           TextWrapping="Wrap" Foreground="{StaticResource TextSecondaryColor}"/>
+                                <Button x:Name="BtnDeployToTest" Content="Deploy to Test" 
+                                        Grid.Row="2" Margin="0,15,0,0" Style="{StaticResource PrimaryButton}" 
+                                        Click="BtnDeployToTest_Click"/>
+                            </Grid>
+                        </Border>
+                        
+                        <!-- Production Card -->
+                        <Border Grid.Column="2" Margin="10" Background="White" BorderBrush="#DDDDDD" 
+                                BorderThickness="1" CornerRadius="5">
+                            <Grid Margin="15">
+                                <Grid.RowDefinitions>
+                                    <RowDefinition Height="Auto"/>
+                                    <RowDefinition Height="*"/>
+                                    <RowDefinition Height="Auto"/>
+                                </Grid.RowDefinitions>
+                                
+                                <TextBlock Text="Production" FontSize="18" FontWeight="Bold" Grid.Row="0"/>
+                                <TextBlock Text="Deploy from Test to Production environment" Grid.Row="1" Margin="0,10,0,0" 
+                                           TextWrapping="Wrap" Foreground="{StaticResource TextSecondaryColor}"/>
+                                <Button x:Name="BtnDeployToProd" Content="Deploy to Production" 
+                                        Grid.Row="2" Margin="0,15,0,0" Style="{StaticResource PrimaryButton}" 
+                                        Click="BtnDeployToProd_Click"/>
+                            </Grid>
+                        </Border>
+                    </Grid>
+                    
+                    <!-- Logs Section -->
+                    <Grid Grid.Row="1" Margin="0,20,0,0">
+                        <Grid.RowDefinitions>
+                            <RowDefinition Height="Auto"/>
+                            <RowDefinition Height="*"/>
+                        </Grid.RowDefinitions>
+                        
+                        <TextBlock Text="Deployment Logs" FontWeight="Bold" Grid.Row="0" Margin="0,0,0,5"/>
+                        <TextBox x:Name="TxtLogs" Grid.Row="1" Height="150" TextWrapping="Wrap" IsReadOnly="True" 
+                                 VerticalScrollBarVisibility="Auto" Background="#F5F5F5" Padding="10"/>
+                    </Grid>
+                </Grid>
+            </TabItem>
+        </TabControl>
+        
+        <!-- Status bar -->
+        <StatusBar Grid.Row="2" Background="{StaticResource PrimaryColor}">
+            <StatusBarItem>
+                <TextBlock x:Name="TxtStatusBar" Text="Ready" Foreground="White"/>
+            </StatusBarItem>
+        </StatusBar>
+    </Grid>
+</Window>
