@@ -24,6 +24,7 @@
                 <RowDefinition Height="Auto"/>
                 <RowDefinition Height="Auto"/>
                 <RowDefinition Height="Auto"/>
+                <RowDefinition Height="Auto"/>
             </Grid.RowDefinitions>
             
             <!-- Project Name -->
@@ -39,6 +40,11 @@
             <TextBox x:Name="TxtSourcePath" Grid.Row="2" Grid.Column="1" Margin="5" Padding="5"/>
             <Button x:Name="BtnBrowseSource" Content="Browse" Grid.Row="2" Grid.Column="2" 
                     Margin="5" Padding="10,5" Click="BtnBrowseSource_Click"/>
+                    
+            <!-- Build Command -->
+            <TextBlock Text="Build Command:" Grid.Row="3" Grid.Column="0" VerticalAlignment="Center" 
+                       ToolTip="Command to build the project. Example: dotnet build -c Release"/>
+            <TextBox x:Name="TxtBuildCommand" Grid.Row="3" Grid.Column="1" Grid.ColumnSpan="2" Margin="5" Padding="5"/>
         </Grid>
         
         <!-- Configuration Settings -->

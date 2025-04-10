@@ -97,7 +97,7 @@
                     <DataGrid.Columns>
                         <DataGridTextColumn Header="Project Name" Binding="{Binding Name}" Width="2*"/>
                         <DataGridTextColumn Header="Version" Binding="{Binding CurrentVersion}" Width="1*"/>
-                        <DataGridTextColumn Header="Source Path" Binding="{Binding SourcePath}" Width="4*"/>
+                        <DataGridTextColumn Header="Project File" Binding="{Binding ProjectFilePath}" Width="4*"/>
                         
                         <!-- Development Column -->
                         <DataGridTemplateColumn Header="Development" Width="1*">
@@ -207,10 +207,15 @@
         <!-- Status bar -->
         <StatusBar Grid.Row="2" Background="{StaticResource PrimaryColor}">
             <StatusBarItem>
-                <TextBlock x:Name="TxtStatusBar" Text="Ready" Foreground="White"/>
+                <StackPanel Orientation="Horizontal">
+                    <TextBlock x:Name="TxtStatusBar" Text="Ready" Foreground="White"/>
+                    <ProgressBar x:Name="ProgressIndicator" Width="100" Height="15" Margin="10,0,0,0" 
+                                 Visibility="Collapsed" IsIndeterminate="True" Background="Transparent"
+                                 BorderBrush="White" Foreground="White" />
+                </StackPanel>
             </StatusBarItem>
             <StatusBarItem HorizontalAlignment="Right">
-                <TextBlock Text="Devotter v1.0.0" Foreground="White" FontSize="10" Margin="0,0,5,0"/>
+                <TextBlock Text="Devotter v1.0.0" Foreground="White" FontSize="10" Margin="0,0,5,0" Name="TxtAppVersion"/>
             </StatusBarItem>
         </StatusBar>
     </Grid>
